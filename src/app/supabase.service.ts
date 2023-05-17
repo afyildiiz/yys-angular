@@ -27,6 +27,20 @@ export class SupabaseService {
     this.supabase = createClient(environment.supabaseUrl, environment.supabaseKey)
   }
 
+
+  async addData(data: any) {
+    const { data: newData, error } = await this.supabase
+      .from('quality_standarts_items')
+      .insert([data]);
+
+    if (error) {
+      console.error('Veri eklenirken hata oluştu:', error);
+    }
+
+    return newData;
+  }
+
+
   get session() {
     this.supabase.auth.getSession().then(({ data }) => {
       this._session = data.session

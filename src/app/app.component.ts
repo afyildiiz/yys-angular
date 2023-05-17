@@ -2,6 +2,11 @@ import { Component, OnInit } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 import { createClient } from '@supabase/supabase-js';
 import { environment } from 'src/environments/environment';
+import { Json } from 'src/schema';
+import { HttpClient } from '@angular/common/http';
+import { map } from 'rxjs';
+import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { yys } from './yys';
 
 @Component({
   selector: 'app-root',
@@ -9,39 +14,71 @@ import { environment } from 'src/environments/environment';
   styleUrls: ['./app.component.css'],
 })
 export class AppComponent implements OnInit {
-  title = 'angular-user-management';
 
   session = this.supa.session;
   
   supabase= createClient(environment.supabaseUrl,environment.supabaseKey)
 
-  constructor(private readonly supa: SupabaseService) {}
+  data:yys={
+    item_type: '',
+    code: '',
+    title: '',
+    item_order: 0,
+    parent_id: '',
+    dsc: '',
+    quality_standard_id: '',
+    answer_type: '',
+    answer_detail: {},
+    score: 0,
+    maturity_level: {}
+  }
+
+
+
+  myform!:FormGroup
+
+  constructor(private readonly supa: SupabaseService,private http:HttpClient,private fb:FormBuilder) {}
 
   ngOnInit() {
-    // this.supa.authChanges((_, session) => (this.session = session));
-    // this.insertInfo() 
-    // this.updateInfo()
-    // this.deleteInfo()
+    this.myform=this.fb.group({
+      item_type:new FormControl(this.data.item_type,Validators.required),
+      code:new FormControl(this.data.code,Validators.required),
+      title:new FormControl(this.data.title,Validators.required),
+      item_order:new FormControl(this.data.item_order,Validators.required),
+      // parent_id:new FormControl(this.data.parent_id,Validators.required),
+      dsc:new FormControl(this.data.dsc,Validators.required),
+      answer_type:new FormControl(this.data.answer_type,Validators.required),
+      // answer_detail:new FormControl(this.data.answer_detail,Validators.required),
+      score:new FormControl(this.data.score,Validators.required),
+      // maturity_level:new FormControl(this.data.maturity_level,Validators.required),
+      quality_standart_id:new FormControl(this.data.item_order,Validators.required)
+      
+
+    })
     this.getInfo()
     this.subscription()
   }
 
   async getInfo(){
     let { data: profile, error } = await this.supabase
-    .from('profile')
+    .from('quality_stardarts_items')
     .select('*')
-    console.log(profile)
+    console.log('aa',profile)
   }
 
-  async insertInfo(){
-    const { data, error } = await this.supabase
-      .from('tenants')
-      .insert([
-      { created_at: '2023-04-10T04:04:13+00:00',dsc: "Textil san", id: "10154135-9a37-49eb-ba89-611c64a796c7",name: "YILDIZ A.Ş",status: "active",tenant_admin_user_id: "8fc28d7a-368d-4f86-bdbb-663f8ac379ba",tenant_type: "yys customer" },
-      ])
-      console.log(data)
-      console.log(error)
+  async onSubmit() {
+    const formData = this.myform.value;
+    console.log(formData)
+    this.supabase
+      .from('quality_stardarts_items') // Göndermek istediğiniz tablonun adını buraya girin
+      .insert([formData])
+      .then(response => {
+        console.log('Veri başarıyla gönderildi:', response);
+      })
+      
   }
+
+  
 
   async subscription(){
     const profile = this.supabase.channel('custom-all-channel')
