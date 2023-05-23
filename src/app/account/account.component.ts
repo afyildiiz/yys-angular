@@ -1,8 +1,9 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import { AuthSession, createClient } from '@supabase/supabase-js';
 import { Profile, SupabaseService } from '../supabase.service';
 import { environment } from 'src/environments/environment';
+import { MatSidenav } from '@angular/material/sidenav';
 
 @Component({
   selector: 'app-account',
@@ -10,17 +11,12 @@ import { environment } from 'src/environments/environment';
   styleUrls: ['./account.component.css'],
 })
 export class AccountComponent implements OnInit {
-  loading = false;
-  profile!: Profile;
-
-  @Input()
-  session!: AuthSession;
-
-  updateProfileForm = this.formBuilder.group({
-    username: '',
-    website: '',
-    avatar_url: '',
-  });
+  
+  @ViewChild('sidenav') sidenav!: MatSidenav;
+  isExpanded = true;
+  showSubmenu: boolean = false;
+  isShowing = false;
+  showSubSubMenu: boolean = false;
 
   constructor(
     private readonly supa: SupabaseService,
@@ -31,76 +27,18 @@ export class AccountComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
 
-    await this.getProfile();
-    const { username, website, avatar_url } = this.profile;
-    this.updateProfileForm.patchValue({
-      username,
-      website,
-      avatar_url,
-    });
   }
 
 
-
-  get avatarUrl() {
-    return this.updateProfileForm.value.avatar_url as string;
-  }
-
-  async getProfile() {
-    try {
-      this.loading = true;
-      const { user } = this.session;
-      let { data: profile, error, status } = await this.supa.profile(user);
-
-      if (error && status !== 406) {
-        throw error;
-      }
-
-      if (profile) {
-        this.profile = profile;
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        alert(error.message);
-      }
-    } finally {
-      this.loading = false;
+  mouseenter() {
+    if (!this.isExpanded) {
+      this.isShowing = true;
     }
   }
 
-  async updateAvatar(event: string): Promise<void> {
-    this.updateProfileForm.patchValue({
-      avatar_url: event,
-    });
-    await this.updateProfile();
-  }
-
-  async updateProfile(): Promise<void> {
-    try {
-      this.loading = true;
-      const { user } = this.session;
-
-      const username = this.updateProfileForm.value.username as string;
-      const website = this.updateProfileForm.value.website as string;
-      const avatar_url = this.updateProfileForm.value.avatar_url as string;
-
-      const { error } = await this.supa.updateProfile({
-        id: user.id,
-        username,
-        website,
-        avatar_url,
-      });
-      if (error) throw error;
-    } catch (error) {
-      if (error instanceof Error) {
-        alert(error.message);
-      }
-    } finally {
-      this.loading = false;
+  mouseleave() {
+    if (!this.isExpanded) {
+      this.isShowing = false;
     }
-  }
-
-  async signOut() {
-    await this.supa.signOut();
   }
 }
